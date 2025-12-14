@@ -1,0 +1,17 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Django
+db.sqlite3
+staticfiles/
+
+# Docker volumes
+pgdata/
+
+# OS
+.DS_Store
+Thumbs.db
