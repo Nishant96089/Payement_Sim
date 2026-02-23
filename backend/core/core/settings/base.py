@@ -39,6 +39,7 @@ INSTALLED_APPS = [
 
     "rest_framework",
     "apps.merchants.apps.MerchantsConfig",
+    "apps.payments.apps.PaymentsConfig",
 ]
 
 # --------------------------------------------------
@@ -115,3 +116,12 @@ CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
+
+# --------------------------------------------------
+# DRF SETTINGS
+# --------------------------------------------------
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "apps.merchants.authentication.MerchantSecretKeyAuthentication",
+    ],
+}

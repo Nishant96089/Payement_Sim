@@ -49,10 +49,23 @@ class Merchant(models.Model):
     created_at=models.DateTimeField(auto_now_add=True)
     updated_at=models.DateTimeField(auto_now=True)
 
+    webhook_url = models.URLField(
+    blank=True,
+    null=True,
+    help_text="Webhook endpoint for payment notifications"
+    )
+
     class Meta:
         db_table="merchants"
         ordering=["-created_at"]
 
     def __str__(self) -> str:
         return f"{self.name} ({self.email})"
+    
+    @property
+    def is_authenticated(self):
+        """
+        Required for DRF IsAuthenticated permission
+        """
+        return True
 
