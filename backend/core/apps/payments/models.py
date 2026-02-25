@@ -8,6 +8,7 @@ class Payment(models.Model):
 
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
+        PROCESSING = "processing", "Processing"
         SUCCESS = "success", "Success"
         FAILED = "failed", "Failed"
 

@@ -7,14 +7,16 @@ from .serializers import PaymentCreateSerializer, PaymentStatusUpdateSerializer
 from .models import Payment, IdempotencyKey
 from .serializers import PaymentListSerializer
 from django.shortcuts import get_object_or_404
-from .tasks import send_payment_webhook
-
+from .tasks import send_payment_webhook, process_payment
+from apps.merchants.ratelimit import MerchantRateThrottle
 
 class PaymentCreateView(APIView):
 
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+
+        MerchantRateThrottle().allow_request(request)
 
         merchant = request.user
 
@@ -45,6 +47,9 @@ class PaymentCreateView(APIView):
         serializer.is_valid(raise_exception=True)
 
         payment = serializer.save()
+        payment.status = "processing"
+        payment.save()
+        process_payment.delay(str(payment.id))
 
         # Store idempotency key
         IdempotencyKey.objects.create(

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "apps.merchants.apps.MerchantsConfig",
     "apps.payments.apps.PaymentsConfig",
+    "apps.apilogs",
 ]
 
 # --------------------------------------------------
@@ -52,6 +53,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "apps.apilogs.middleware.APILogMiddleware",
 ]
 
 # --------------------------------------------------
@@ -116,6 +118,18 @@ CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
+
+# Redis cache for rate limiting
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": env("REDIS_URL"),
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
 
 # --------------------------------------------------
 # DRF SETTINGS
