@@ -1,96 +1,99 @@
-# Payment_Sim (Django + DRF + Docker + Postgres + Redis + Celery)
+# Payement_Sim
 
-A production‑grade backend simulation of a payment gateway built using Django, Django REST Framework, Docker, PostgreSQL, Redis, and Celery.
+> A production-grade backend simulation of a payment gateway built with Django, DRF, Docker, PostgreSQL, Redis, and Celery.
 
-This project demonstrates real‑world backend architecture and patterns used by payment providers like Stripe, Razorpay, and PayPal.
-
----
-
-# Features Implemented
-
-## Core Features
-
-- Merchant system with secure API keys
-- Secret‑key based authentication
-- Payment creation API
-- Payment listing API
-- Payment detail API
-- Payment status lifecycle management
-- Idempotency protection (prevents duplicate payments)
-- Webhook system for event notifications
-
-## Infrastructure
-
-- Dockerized environment
-- PostgreSQL database
-- Redis message broker
-- Celery async worker
-- Environment‑based configuration
-
-## Security Features
-
-- Merchant isolation
-- Secret key authentication
-- Idempotency keys
-- Scoped database access
+This project replicates real-world backend architecture used by payment providers like **Stripe, Razorpay, and PayPal**.
 
 ---
 
-# Tech Stack
+# 🚀 Live Features
 
-Backend:
+## Core Payment System
+
+- ✅ Merchant onboarding system
+- ✅ Secure API key authentication
+- ✅ Payment creation API
+- ✅ Payment listing API
+- ✅ Payment detail API
+- ✅ Payment lifecycle management
+- ✅ Idempotency protection
+- ✅ Webhook system
+- ✅ Async event processing using Celery
+
+---
+
+# 🏗 Architecture Overview
+
+```
+Client (Postman / Frontend)
+        │
+        ▼
+Django REST API (Docker)
+        │
+        ├── PostgreSQL (Database)
+        │
+        ├── Redis (Message Broker)
+        │
+        └── Celery Worker (Async Tasks)
+                │
+                └── Webhook delivery
+```
+
+---
+
+# 🧰 Tech Stack
+
+## Backend
 
 - Python 3.11
 - Django 5
 - Django REST Framework
 
-Database:
+## Database
 
 - PostgreSQL
 
-Async Processing:
+## Async Processing
 
 - Celery
 - Redis
 
-DevOps:
+## Infrastructure
 
 - Docker
 - Docker Compose
 
 ---
 
-# Project Structure
+# 📁 Project Structure
 
 ```
 Payement_Sim/
+
+backend/
 │
-├── backend/
-│   ├── requirements.txt
-│   └── core/
-│       ├── manage.py
-│       ├── core/
-│       │   ├── settings/
-│       │   ├── urls.py
-│       │   ├── celery_app.py
+├── core/
+│   ├── manage.py
+│   │
+│   ├── core/
+│   │   ├── settings/
+│   │   ├── urls.py
+│   │   ├── celery_app.py
+│   │
+│   └── apps/
+│       ├── merchants/
+│       │   ├── models.py
+│       │   ├── authentication.py
+│       │   ├── serializers.py
+│       │   ├── views.py
 │       │
-│       └── apps/
-│           ├── merchants/
-│           │   ├── models.py
-│           │   ├── authentication.py
-│           │   ├── views.py
-│           │   ├── serializers.py
-│           │
-│           └── payments/
-│               ├── models.py
-│               ├── views.py
-│               ├── serializers.py
-│               ├── tasks.py
+│       └── payments/
+│           ├── models.py
+│           ├── serializers.py
+│           ├── views.py
+│           ├── tasks.py
 │
 ├── docker/
-│   └── django/
-│       └── Dockerfile
-│
 ├── docker-compose.yml
 ├── .env
 └── README.md
@@ -98,75 +101,72 @@ Payement_Sim/
 
 ---
 
-# Database Models
+# 🔐 Authentication System
 
-## Merchant
+Uses **secret-key based authentication**, similar to Stripe.
 
-Represents a merchant using the payment gateway.
+## Request Header
 
-Fields:
+```
+Authorization: Bearer sk_xxxxxxxxxxxxx
+```
 
-- id (UUID)
-- name
-- email
-- public_key
-- secret_key
-- webhook_url
-- is_active
-- created_at
+Authentication flow:
 
-## Payment
+1. Extract secret key
+2. Validate merchant
+3. Attach merchant to request
 
-Represents a payment created by merchant.
+---
 
-Fields:
-
-- id (UUID)
-- merchant
-- amount
-- currency
-- status
-- created_at
-
-Status lifecycle:
+# 💰 Payment Lifecycle
 
 ```
 pending → success
 pending → failed
 ```
 
-## IdempotencyKey
+All payments start in:
+
+```
+pending
+```
+
+---
+
+# 🧠 Idempotency System
 
 Prevents duplicate payments.
 
-Fields:
+Client sends:
 
-- key
-- merchant
-- payment
-- created_at
+```
+Idempotency-Key: unique-key
+```
+
+Same key → Same payment returned.
 
 ---
 
-# Authentication System
+# 🔔 Webhook System
 
-Uses secret key authentication.
+Async webhook delivery using Celery.
 
-Header format:
+Example webhook payload:
 
 ```
-Authorization: Bearer sk_xxxxxxxxx
+{
+  "event": "payment.success",
+  "payment_id": "uuid",
+  "amount": 10000,
+  "currency": "INR",
+  "status": "success"
+}
 ```
-
-Authentication flow:
-
-- Extract secret key
-- Find merchant
-- Attach merchant to request
 
 ---
 
-# API Endpoints
+# 🌐 API Endpoints
 
 Base URL:
 
@@ -176,18 +176,12 @@ http://localhost:8000/api/
 
 ---
 
-## Merchant APIs
+## Merchant API
 
 ### Get merchant info
 
 ```
 GET /api/merchants/me/
-```
-
-Header:
-
-```
-Authorization: Bearer sk_xxxx
 ```
 
 ---
@@ -226,10 +220,10 @@ GET /api/payments/list/
 
 ---
 
-### Get payment detail
+### Payment detail
 
 ```
-GET /api/payments/{payment_id}/
+GET /api/payments/{id}/
 ```
 
 ---
@@ -237,110 +231,52 @@ GET /api/payments/{payment_id}/
 ### Update payment status
 
 ```
-PATCH /api/payments/{payment_id}/status/
-```
-
-Body:
-
-```
-{
-  "status": "success"
-}
+PATCH /api/payments/{id}/status/
 ```
 
 ---
 
-# Webhook System
+# ⚙️ Installation
 
-Merchants can configure webhook URL.
-
-When payment status updates, webhook is sent.
-
-Example webhook payload:
+## Clone repository
 
 ```
-{
-  "event": "payment.success",
-  "payment_id": "uuid",
-  "amount": 10000,
-  "currency": "INR",
-  "status": "success"
-}
+git clone https://github.com/YOUR_USERNAME/Payement_Sim.git
 ```
-
-Webhook delivery handled by Celery worker.
 
 ---
 
-# Idempotency System
+## Setup environment
 
-Prevents duplicate payment creation.
-
-Client sends:
-
-```
-Idempotency-Key: unique-key
-```
-
-Same key returns same payment.
-
----
-
-# Environment Variables
-
-File: `.env`
-
-Example:
+Create `.env`
 
 ```
 SECRET_KEY=dev-secret
 DEBUG=True
 
 DATABASE_URL=postgres://pguser:pgpass@db:5432/pgateway
-
 REDIS_URL=redis://redis:6379/0
 ```
 
 ---
 
-# Running the Project
-
-## Start containers
+## Start services
 
 ```
 docker compose up --build
 ```
 
-Services started:
-
-- Django API
-- PostgreSQL
-- Redis
-- Celery worker
-
-## Access admin
-
-```
-http://localhost:8000/admin/
-```
-
 ---
 
-# Access Database
+# 🧪 Testing
 
-Connect via Docker:
+Use Postman.
+
+Example:
 
 ```
-docker compose exec db psql -U pguser -d pgateway
-```
-
----
-
-# Testing using Postman
-
-Example request:
-
 POST /api/payments/
+```
 
 Headers:
 
@@ -349,64 +285,66 @@ Authorization: Bearer sk_xxxx
 Idempotency-Key: test123
 ```
 
-Body:
+---
+
+# 🗄 Database Access
 
 ```
-{
-  "amount": 10000,
-  "currency": "INR"
-}
+docker compose exec db psql -U pguser -d pgateway
 ```
 
 ---
 
-# Production Concepts Implemented
+# 🧱 Production Concepts Implemented
 
-This project implements real‑world backend concepts:
-
-- Authentication system
-- API security
-- Database relationships
+- API authentication
+- Payment lifecycle
 - Idempotency
 - Async processing
 - Webhooks
-- Docker infrastructure
-- Background jobs
+- Dockerized backend
+- Background workers
+- Merchant isolation
 
 ---
 
-# Learning Goals Achieved
-
-This project teaches:
+# 📈 Skills Demonstrated
 
 - Production Django architecture
-- Class‑based views
-- DRF authentication
 - Dockerized backend
+- REST API design
 - PostgreSQL integration
-- Celery async tasks
-- Payment system design
+- Async processing with Celery
+- Secure authentication systems
 
 ---
 
-# Next Planned Features
+# 🧭 Roadmap
+
+Upcoming features:
 
 - Payment processing simulation
-- API rate limiting
-- API key scopes
-- Logging system
+- Rate limiting
+- API scopes
 - Production deployment
+- Monitoring
 
 ---
 
-# Author
+# 👨‍💻 Author
 
 Nishant Sinha
 
-Backend Developer Project
+Backend Developer
 
 ---
 
-# License
+# ⭐ If you like this project
 
-Open source for learning purposes.
+Give it a star on GitHub ⭐
+
+---
+
+# 📜 License
+
+Open-source for learning and portfolio use.
