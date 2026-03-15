@@ -47,7 +47,16 @@ class Merchant(models.Model):
         editable=False,
     )
 
-    # ✅ ADD THIS FIELD
+    password = models.CharField(max_length=255)
+
+    is_verified = models.BooleanField(default=False)
+
+    verification_token = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
     scope = models.CharField(
         max_length=10,
         choices=Scope.choices,

@@ -27,9 +27,10 @@ def process_payment(payment_id):
 
     payment = Payment.objects.get(id=payment_id)
 
-    payment.status = random.choice(
-        ["success", "failed"]
-    )
+    if payment.fraud_flag:
+        payment.status = "failed"
+    else:
+        payment.status = random.choice(["success", "failed"])
 
     payment.save()
 

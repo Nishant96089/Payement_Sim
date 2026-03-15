@@ -4,11 +4,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 
 from .serializers import PaymentCreateSerializer, PaymentStatusUpdateSerializer
-from .models import Payment, IdempotencyKey
+from .models import Payment, IdempotencyKey, Refund
 from .serializers import PaymentListSerializer
+from .serializers_refund import RefundSerializer
 from django.shortcuts import get_object_or_404
 from .tasks import send_payment_webhook, process_payment
 from apps.merchants.ratelimit import MerchantRateThrottle
+from apps.payments.services.fraud_detection import evaluate_payment
 
 class PaymentCreateView(APIView):
 
@@ -47,6 +49,8 @@ class PaymentCreateView(APIView):
         serializer.is_valid(raise_exception=True)
 
         payment = serializer.save()
+        payment.fraud_flag = evaluate_payment(payment)
+        payment.save()
         payment.status = "processing"
         payment.save()
         process_payment.delay(str(payment.id))
@@ -144,3 +148,40 @@ class PaymentStatusUpdateView(APIView):
             "id": str(payment.id),
             "status": payment.status
         })
+    
+class RefundCreateView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        serializer = RefundSerializer(data=request.data)
+
+        if serializer.is_valid():
+
+            refund = serializer.save(
+                merchant=request.user
+            )
+
+            return Response(
+                RefundSerializer(refund).data,
+                status=status.HTTP_201_CREATED
+            )
+
+        return Response(serializer.errors, status=400)
+    
+class RefundDetailView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, refund_id):
+
+        refund = get_object_or_404(
+            Refund,
+            id=refund_id,
+            merchant=request.user
+        )
+
+        return Response(
+            RefundSerializer(refund).data
+        )

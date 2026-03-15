@@ -44,6 +44,11 @@ class Payment(models.Model):
         default=Status.PENDING,
     )
 
+    fraud_flag = models.BooleanField(
+        default=False,
+        help_text="Marks suspicious payments detected by Payment engine"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -78,3 +83,52 @@ class IdempotencyKey(models.Model):
 
     def __str__(self):
         return self.key
+    
+class Refund(models.Model):
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pending"
+        SUCCESS = "success", "Success"
+        FAILED = "failed", "Failed"
+
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
+
+    payment = models.ForeignKey(
+        Payment,
+        on_delete=models.CASCADE,
+        related_name="refunds",
+    )
+
+    merchant = models.ForeignKey(
+        Merchant,
+        on_delete=models.CASCADE,
+    )
+
+    amount = models.PositiveIntegerField(
+        help_text="Refund amount in smallest currency unit"
+    )
+
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+
+    reason = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "refunds"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Refund {self.id}"
