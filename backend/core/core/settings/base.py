@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
 
     "rest_framework",
+    "drf_spectacular",
     "apps.merchants.apps.MerchantsConfig",
     "apps.payments.apps.PaymentsConfig",
     "apps.apilogs",
@@ -138,4 +139,28 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "apps.merchants.authentication.MerchantSecretKeyAuthentication",
     ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Payment Gateway API",
+    "DESCRIPTION": "Production-ready payment gateway backend",
+    "VERSION": "1.0.0",
+
+    "SERVE_INCLUDE_SCHEMA": False,
+
+    "SECURITY": [
+        {"ApiKeyAuth": []}
+    ],
+
+    "COMPONENTS": {
+        "securitySchemes": {
+            "ApiKeyAuth": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "Authorization",
+                "description": "Use format: Bearer sk_xxx"
+            }
+        }
+    },
 }

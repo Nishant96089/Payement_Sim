@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 from .serializers import PaymentCreateSerializer, PaymentStatusUpdateSerializer
 from .models import Payment, IdempotencyKey, Refund
@@ -12,6 +13,11 @@ from .tasks import send_payment_webhook, process_payment
 from apps.merchants.ratelimit import MerchantRateThrottle
 from apps.payments.services.fraud_detection import evaluate_payment
 
+@extend_schema(
+    request=PaymentCreateSerializer,
+    responses=PaymentCreateSerializer,
+    description="Create a new payment (requires Idempotency-Key header)"
+)
 class PaymentCreateView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -67,6 +73,10 @@ class PaymentCreateView(APIView):
             status=201
         )
     
+@extend_schema(
+    responses=PaymentListSerializer(many=True),
+    description="List all payments for authenticated merchant"
+)
 class PaymentListView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -86,6 +96,10 @@ class PaymentListView(APIView):
 
         return Response(serializer.data)    
     
+@extend_schema(
+    responses=PaymentListSerializer,
+    description="Retrieve a specific payment"
+)
 class PaymentDetailView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -104,6 +118,11 @@ class PaymentDetailView(APIView):
 
         return Response(serializer.data)
     
+@extend_schema(
+    request=PaymentStatusUpdateSerializer,
+    responses=OpenApiResponse(description="Payment status updated"),
+    description="Update payment status and trigger webhook"
+)
 class PaymentStatusUpdateView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -149,6 +168,11 @@ class PaymentStatusUpdateView(APIView):
             "status": payment.status
         })
     
+@extend_schema(
+    request=RefundSerializer,
+    responses=RefundSerializer,
+    description="Create a refund for a payment"
+)
 class RefundCreateView(APIView):
 
     permission_classes = [IsAuthenticated]
@@ -170,6 +194,10 @@ class RefundCreateView(APIView):
 
         return Response(serializer.errors, status=400)
     
+@extend_schema(
+    responses=RefundSerializer,
+    description="Retrieve refund details"
+)
 class RefundDetailView(APIView):
 
     permission_classes = [IsAuthenticated]

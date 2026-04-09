@@ -5,11 +5,15 @@ from rest_framework.permissions import IsAuthenticated
 
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import check_password
+from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 from .models import Merchant
 from .serializers import MerchantSerializer, MerchantRegisterSerializer
 
-
+@extend_schema(
+    responses=MerchantSerializer,
+    description="Get currently authenticated merchant"
+)
 class MerchantMeView(APIView):
     """
     Return currently authenticated merchant
@@ -23,6 +27,11 @@ class MerchantMeView(APIView):
 
         return Response(serializer.data)
     
+@extend_schema(
+    request=MerchantRegisterSerializer,
+    responses=OpenApiResponse(description="Merchant registered successfully"),
+    description="Register a new merchant"
+)
 class MerchantRegisterView(APIView):
 
     authentication_classes = []
@@ -43,6 +52,9 @@ class MerchantRegisterView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+@extend_schema(
+    description="Verify merchant account using token"
+)
 class MerchantVerifyView(APIView):
 
     authentication_classes = []
@@ -65,6 +77,19 @@ class MerchantVerifyView(APIView):
             "message": "Account verified successfully"
         })
     
+@extend_schema(
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "email": {"type": "string"},
+                "password": {"type": "string"},
+            }
+        }
+    },
+    responses=OpenApiResponse(description="Returns API keys"),
+    description="Login merchant and return API keys"
+)
 class MerchantLoginView(APIView):
 
     authentication_classes = []
